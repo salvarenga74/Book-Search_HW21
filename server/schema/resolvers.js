@@ -1,29 +1,26 @@
-const { Tech, Matchup } = require("../models");
+const { User } = require("../models");
+const { AuthenticationError } = require("apollo-server-express");
+const {} = require("../utils/auth");
 
 const resolvers = {
   Query: {
-    tech: async () => {
-      return Tech.find({});
+    me: async (parent, args, context) => {
+      if (context.user) {
+        const userData = await User.findOne({ _id: context.user._id }).select(
+          "-__ -password"
+        );
+        return userData;
+      }
     },
-    matchups: async (parent, { _id }) => {
-      const params = _id ? { _id } : {};
-      return Matchup.find(params);
+    users: async () => {
+      return User.find().select("-__v -password");
     },
-  },
-  Mutation: {
-    createMatchup: async (parent, args) => {
-      const matchup = await Matchup.create(args);
-      return matchup;
-    },
-    createVote: async (parent, { _id, techNum }) => {
-      const vote = await Matchup.findOneAndUpdate(
-        { _id },
-        { $inc: { [`tech${techNum}_votes`]: 1 } },
-        { new: true }
-      );
-      return vote;
+    user: async (parent, { username }) => {
+      return User.findOne({ username }).select("-__ -password");
     },
   },
+
+  Mutation: {},
 };
 
 module.exports = resolvers;
